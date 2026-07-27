@@ -1,0 +1,8 @@
+id: jiaxin
+name: 数字
+version: 1.0.0
+author: jiaixntang
+icon: app.png
+desc: 五
+files:
+  - main.py

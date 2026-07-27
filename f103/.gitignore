@@ -1,0 +1,15 @@
+# Keil MDK - build output 忽略以下内容：
+Objects/
+Listings/
+
+# Keil MDK - user-specific settings
+*.uvguix.*
+*.uvoptx
+*.scvd
+
+# Logs
+*.log
+*.log.lock
+
+# VS Code workspace
+.vscode/
