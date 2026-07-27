@@ -15,6 +15,7 @@ VALID_COUNTS = (1, 2, 3, 4)
 
 CONF_TH = 0.50
 STABLE_CONF_TH = 0.65
+STABLE_FRAMES = 5
 def find_model():
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -84,7 +85,8 @@ dis = display.Display(640, 480)
 serial = uart.UART(VISION_UART_DEVICE, VISION_BAUDRATE)
 
 print("vision continuously sending, uart:", VISION_UART_DEVICE, VISION_BAUDRATE)
-last_sent_frame = None
+last_digits = None
+stable_count = 0
 
 while not app.need_exit():
     try:
@@ -96,12 +98,23 @@ while not app.need_exit():
         draw_detections(img, detector, objs)
 
         digits = recognized_digits(objs)
-        # Send every processed frame. An empty group produces 12 00 00 00 00 00 00 5B.
-        frame = send_digit_group(serial, digits)
-        if frame != last_sent_frame:
+
+        # Send once for every ten consecutive identical recognition results.
+        # This also keeps reporting the all-zero frame while no digit is visible.
+        if digits == last_digits:
+            stable_count += 1
+        else:
+            last_digits = digits
+            stable_count = 1
+
+        if stable_count >= STABLE_FRAMES:
+            frame = send_digit_group(serial, digits)
             print("send:", list(frame))
-            last_sent_frame = frame
-        img.draw_string(4, 4, "SEND %d" % len(digits), color=image.COLOR_GREEN)
+            stable_count = 0
+            last_digits = digits
+            img.draw_string(4, 4, "SEND %d" % len(digits), color=image.COLOR_GREEN)
+        else:
+            img.draw_string(4, 4, "WAIT %d/%d" % (stable_count, STABLE_FRAMES), color=image.COLOR_GREEN)
 
         dis.show(img)
     except Exception as err:
